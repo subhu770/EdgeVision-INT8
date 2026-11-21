@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  edgevision-detector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: edgevision-int8:latest
+    container_name: edgevision-int8-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - SIMULATION_MODE=true
+      - MODEL_PATH=models/defect_detector_int8.onnx
+      - USE_INT8=true
+      - CONF_THRESHOLD=0.35
+      - IOU_THRESHOLD=0.45
+      - LOG_LEVEL=info
+      - NUM_THREADS=4
+    volumes:
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
